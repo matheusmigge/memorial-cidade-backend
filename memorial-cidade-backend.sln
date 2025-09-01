@@ -1,0 +1,25 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.14.36221.1 d17.14
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "memorial-cidade-backend", "memorial-cidade-backend\memorial-cidade-backend.csproj", "{DC8735A0-3933-4F3D-850F-D5985E31B97B}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{DC8735A0-3933-4F3D-850F-D5985E31B97B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{DC8735A0-3933-4F3D-850F-D5985E31B97B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{DC8735A0-3933-4F3D-850F-D5985E31B97B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{DC8735A0-3933-4F3D-850F-D5985E31B97B}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {EF8A51AD-76E0-4887-9279-FAD7CFE9B6C7}
+	EndGlobalSection
+EndGlobal
