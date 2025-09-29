@@ -17,9 +17,10 @@ namespace memorial_cidade_backend.Services
         public async Task<IEnumerable<Photo>> GetAllAsync()
         {
             return await _context.Photos
-                .Include(p => p.Location)
+                .Include(p => p.LocationData)
                 .Include(p => p.Photographer)
                 .Include(p => p.Source)
+                .Include(p => p.User)
                 .Include(p => p.Tags)
                 .OrderByDescending(p => p.CreatedAt)
                 .ToListAsync();
@@ -28,9 +29,10 @@ namespace memorial_cidade_backend.Services
         public async Task<Photo> GetByIdAsync(int id)
         {
             var photo = await _context.Photos
-                .Include(p => p.Location)
+                .Include(p => p.LocationData)
                 .Include(p => p.Photographer)
                 .Include(p => p.Source)
+                .Include(p => p.User)
                 .Include(p => p.Tags)
                 .FirstOrDefaultAsync(p => p.Id == id);
 
@@ -52,6 +54,7 @@ namespace memorial_cidade_backend.Services
         {
             var existingPhoto = await _context.Photos
                 .Include(p => p.Tags)
+                .Include(p => p.LocationData)
                 .FirstOrDefaultAsync(p => p.Id == id);
 
             if (existingPhoto == null)
@@ -63,9 +66,26 @@ namespace memorial_cidade_backend.Services
             existingPhoto.YearEnd = photo.YearEnd;
             existingPhoto.UserNote = photo.UserNote;
             existingPhoto.PhotographerId = photo.PhotographerId;
-            existingPhoto.LocationId = photo.LocationId;
             existingPhoto.SourceId = photo.SourceId;
             existingPhoto.UpdatedAt = DateTime.Now;
+
+            // Atualizar LocationData se necessário
+            if (photo.LocationData != null)
+            {
+                if (existingPhoto.LocationData == null)
+                {
+                    existingPhoto.LocationData = photo.LocationData;
+                }
+                else
+                {
+                    existingPhoto.LocationData.Latitude = photo.LocationData.Latitude;
+                    existingPhoto.LocationData.Longitude = photo.LocationData.Longitude;
+                    existingPhoto.LocationData.Heading = photo.LocationData.Heading;
+                    existingPhoto.LocationData.GoogleEarthPhotoUrl = photo.LocationData.GoogleEarthPhotoUrl;
+                    existingPhoto.LocationData.GoogleEarthUrl = photo.LocationData.GoogleEarthUrl;
+                    existingPhoto.LocationData.GoogleStreetViewEmbedUrl = photo.LocationData.GoogleStreetViewEmbedUrl;
+                }
+            }
 
             await _context.SaveChangesAsync();
             return existingPhoto;
@@ -73,22 +93,29 @@ namespace memorial_cidade_backend.Services
 
         public async Task DeleteAsync(int id)
         {
-            var photo = await _context.Photos.FindAsync(id);
+            var photo = await _context.Photos
+                .Include(p => p.Source)
+                .Include(p => p.LocationData)
+                .FirstOrDefaultAsync(p => p.Id == id);
+
             if (photo == null)
                 throw new KeyNotFoundException($"Photo with ID {id} not found.");
+
+            if (photo.Source != null)
+                _context.Sources.Remove(photo.Source);
+
+            if (photo.LocationData != null)
+                _context.LocationDatas.Remove(photo.LocationData);
 
             _context.Photos.Remove(photo);
             await _context.SaveChangesAsync();
         }
 
-        public async Task<IEnumerable<Photo>> GetByLocationIdAsync(int locationId)
+        public Task<IEnumerable<Photo>> GetByLocationIdAsync(int locationId)
         {
-            return await _context.Photos
-                .Include(p => p.Tags)
-                .Where(p => p.LocationId == locationId)
-                .OrderByDescending(p => p.CreatedAt)
-                .ToListAsync();
+            throw new NotImplementedException();
         }
+
 
         public async Task<IEnumerable<Photo>> GetByPhotographerIdAsync(int photographerId)
         {
@@ -121,14 +148,14 @@ namespace memorial_cidade_backend.Services
         {
             var query = _context.Photos
                 .Include(p => p.Tags)
-                .Include(p => p.Location)
+                .Include(p => p.LocationData)
                 .Include(p => p.Photographer)
                 .AsQueryable();
 
             if (!string.IsNullOrEmpty(searchTerm))
             {
-                query = query.Where(p => p.Title.Contains(searchTerm) || 
-                                       p.UserNote.Contains(searchTerm));
+                query = query.Where(p => p.Title.Contains(searchTerm) ||
+                                         p.UserNote.Contains(searchTerm));
             }
 
             if (yearStart.HasValue)

@@ -22,7 +22,7 @@ namespace memorial_cidade_backend.Services
         public async Task<LocationData> GetByIdAsync(int id)
         {
             var location = await _context.LocationDatas
-                .Include(l => l.Photos)
+                .Include(l => l.Photo)
                 .FirstOrDefaultAsync(l => l.Id == id);
 
             if (location == null)
@@ -65,11 +65,12 @@ namespace memorial_cidade_backend.Services
             await _context.SaveChangesAsync();
         }
 
-        public async Task<IEnumerable<LocationData>> GetByCoordinatesRangeAsync(double minLat, double maxLat, double minLong, double maxLong)
+        public async Task<IEnumerable<LocationData>> GetByCoordinatesRangeAsync(double minLat, double maxLat,
+            double minLong, double maxLong)
         {
             return await _context.LocationDatas
                 .Where(l => l.Latitude >= minLat && l.Latitude <= maxLat &&
-                           l.Longitude >= minLong && l.Longitude <= maxLong)
+                            l.Longitude >= minLong && l.Longitude <= maxLong)
                 .ToListAsync();
         }
     }

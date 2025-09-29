@@ -1,5 +1,6 @@
 using memorial_cidade_backend.Data;
 using memorial_cidade_backend.Models;
+using memorial_cidade_backend.DTOs;
 using memorial_cidade_backend.Services.Interfaces;
 using Microsoft.EntityFrameworkCore;
 

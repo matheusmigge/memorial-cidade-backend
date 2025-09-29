@@ -14,7 +14,7 @@ namespace memorial_cidade_backend.Services
             _context = context;
         }
 
-        public async Task<IEnumerable<Tag>> GetAllAsync() 
+        public async Task<IEnumerable<Tag>> GetAllAsync()
         {
             return await _context.Tags
                 .Include(t => t.TagCategory)
@@ -60,7 +60,6 @@ namespace memorial_cidade_backend.Services
                 throw new KeyNotFoundException($"TagCategory with ID {tag.TagCategoryId} not found.");
 
             existingTag.Name = tag.Name;
-            existingTag.IconUrl = tag.IconUrl;
             existingTag.TagCategoryId = tag.TagCategoryId;
 
             await _context.SaveChangesAsync();

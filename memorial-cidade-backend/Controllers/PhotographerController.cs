@@ -1,3 +1,4 @@
+using memorial_cidade_backend.DTOs;
 using Microsoft.AspNetCore.Mvc;
 using memorial_cidade_backend.Models;
 using memorial_cidade_backend.Services.Interfaces;
@@ -19,7 +20,16 @@ namespace memorial_cidade_backend.Controllers
         public async Task<ActionResult<IEnumerable<Photographer>>> GetAll()
         {
             var photographers = await _photographerService.GetAllAsync();
-            return Ok(photographers);
+            var photographerDtos = photographers.Select(p => new PhotographerDTO()
+            {
+                Id = p.Id,
+                Name = p.Name,
+                Biography = p.Biography,
+                BirthDate = p.BirthDate,
+                DeathDate = p.DeathDate,
+                PhotosCount = p.Photos?.Count ?? 0
+            });
+            return Ok(photographerDtos);
         }
 
         [HttpGet("{id}")]
@@ -28,7 +38,16 @@ namespace memorial_cidade_backend.Controllers
             try
             {
                 var photographer = await _photographerService.GetByIdAsync(id);
-                return Ok(photographer);
+                var photographerDto = new PhotographerDTO
+                {
+                    Id = photographer.Id,
+                    Name = photographer.Name,
+                    Biography = photographer.Biography,
+                    BirthDate = photographer.BirthDate,
+                    DeathDate = photographer.DeathDate,
+                    PhotosCount = photographer.Photos?.Count ?? 0
+                };
+                return Ok(photographerDto);
             }
             catch (KeyNotFoundException ex)
             {
@@ -43,7 +62,16 @@ namespace memorial_cidade_backend.Controllers
                 return BadRequest(ModelState);
 
             var created = await _photographerService.CreateAsync(photographer);
-            return CreatedAtAction(nameof(GetById), new { id = created.Id }, created);
+            var photographerDto = new PhotographerDTO()
+            {
+                Id = created.Id,
+                Name = created.Name,
+                Biography = created.Biography,
+                BirthDate = created.BirthDate,
+                DeathDate = created.DeathDate,
+                PhotosCount = 0
+            };
+            return CreatedAtAction(nameof(GetById), new { id = created.Id }, photographerDto);
         }
 
         [HttpPut("{id}")]
@@ -55,7 +83,16 @@ namespace memorial_cidade_backend.Controllers
             try
             {
                 var updated = await _photographerService.UpdateAsync(id, photographer);
-                return Ok(updated);
+                var photographerDto = new PhotographerDTO()
+                {
+                    Id = updated.Id,
+                    Name = updated.Name,
+                    Biography = updated.Biography,
+                    BirthDate = updated.BirthDate,
+                    DeathDate = updated.DeathDate,
+                    PhotosCount = updated.Photos?.Count ?? 0
+                };
+                return Ok(photographerDto);
             }
             catch (KeyNotFoundException ex)
             {
@@ -85,7 +122,16 @@ namespace memorial_cidade_backend.Controllers
         public async Task<ActionResult<IEnumerable<Photographer>>> Search([FromQuery] string name)
         {
             var photographers = await _photographerService.SearchByNameAsync(name);
-            return Ok(photographers);
+            var photographerDtos = photographers.Select(p => new PhotographerDTO()
+            {
+                Id = p.Id,
+                Name = p.Name,
+                Biography = p.Biography,
+                BirthDate = p.BirthDate,
+                DeathDate = p.DeathDate,
+                PhotosCount = p.Photos?.Count ?? 0
+            });
+            return Ok(photographerDtos);
         }
 
         [HttpGet("{id}/photos")]
@@ -94,7 +140,26 @@ namespace memorial_cidade_backend.Controllers
             try
             {
                 var photos = await _photographerService.GetPhotographerPhotosAsync(id);
-                return Ok(photos);
+                var photoDtos = photos.Select(p => new PhotoDTO
+                {
+                    Id = p.Id,
+                    Url = p.Url,
+                    Title = p.Title,
+                    YearStart = p.YearStart,
+                    YearEnd = p.YearEnd,
+                    UserNote = p.UserNote,
+                    CreatedAt = p.CreatedAt,
+                    UpdatedAt = p.UpdatedAt,
+                    PhotographerId = p.PhotographerId,
+                    PhotographerName = p.Photographer?.Name,
+                    LocationId = p.LocationId,
+                    SourceId = p.SourceId,
+                    SourceName = p.Source.Collection,
+                    UserId = p.UserId,
+                    UserName = p.User.FirstName,
+                    TagNames = p.Tags?.Select(t => t.Name).ToList() ?? new List<string>()
+                });
+                return Ok(photoDtos);
             }
             catch (KeyNotFoundException ex)
             {

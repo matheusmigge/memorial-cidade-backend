@@ -47,7 +47,6 @@ namespace memorial_cidade_backend.Services
 
             existingCategory.Name = tagCategory.Name;
             existingCategory.Description = tagCategory.Description;
-            existingCategory.IconUrl = tagCategory.IconUrl;
 
             await _context.SaveChangesAsync();
             return existingCategory;

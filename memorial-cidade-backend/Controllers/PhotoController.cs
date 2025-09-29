@@ -1,3 +1,4 @@
+using memorial_cidade_backend.DTOs;
 using Microsoft.AspNetCore.Mvc;
 using memorial_cidade_backend.Models;
 using memorial_cidade_backend.Services.Interfaces;
@@ -15,11 +16,46 @@ namespace memorial_cidade_backend.Controllers
             _photoService = photoService;
         }
 
+        private static PhotoDTO MapToPhotoDTO(Photo photo)
+        {
+            return new PhotoDTO
+            {
+                Id = photo.Id,
+                Url = photo.Url,
+                Title = photo.Title,
+                YearStart = photo.YearStart,
+                YearEnd = photo.YearEnd,
+                UserNote = photo.UserNote,
+                CreatedAt = photo.CreatedAt,
+                UpdatedAt = photo.UpdatedAt,
+                PhotographerId = photo.PhotographerId,
+                PhotographerName = photo.Photographer?.Name,
+                LocationId = photo.LocationData?.Id ?? 0,
+                LocationData = photo.LocationData != null ? new LocationDataDTO
+                {
+                    Latitude = photo.LocationData.Latitude,
+                    Longitude = photo.LocationData.Longitude,
+                    Heading = photo.LocationData.Heading,
+                    GoogleEarthPhotoUrl = photo.LocationData.GoogleEarthPhotoUrl,
+                    GoogleEarthUrl = photo.LocationData.GoogleEarthUrl,
+                    GoogleStreetViewEmbedUrl = photo.LocationData.GoogleStreetViewEmbedUrl
+                } : null,
+                SourceId = photo.SourceId,
+                SourceName = photo.Source?.Collection,
+                UserId = photo.UserId,
+                UserName = (photo.User != null)
+                    ? ($"{photo.User.FirstName} {photo.User.LastName}").Trim()
+                    : null,
+                TagNames = photo.Tags?.Select(t => t.Name).ToList() ?? new List<string>()
+            };
+        }
+
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<Photo>>> GetAll()
+        public async Task<ActionResult<IEnumerable<PhotoDTO>>> GetAll()
         {
             var photos = await _photoService.GetAllAsync();
-            return Ok(photos);
+            var photoDtos = photos.Select(MapToPhotoDTO).ToList();
+            return Ok(photoDtos);
         }
 
         [HttpGet("{id}")]
@@ -37,10 +73,31 @@ namespace memorial_cidade_backend.Controllers
         }
 
         [HttpPost]
-        public async Task<ActionResult<Photo>> Create(Photo photo)
+        public async Task<ActionResult<Photo>> Create(CreatePhotoDTO dto)
         {
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
+            
+            var photo = new Photo
+            {
+                Url = dto.Url,
+                Title = dto.Title,
+                YearStart = dto.YearStart,
+                CreatedAt = dto.CreatedAt,
+                UpdatedAt = dto.UpdatedAt,
+                PhotographerId = dto.PhotographerId,
+                SourceId = dto.SourceId,
+                UserId = dto.UserId,
+                LocationData = dto.LocationData != null ? new LocationData
+                {
+                    Latitude = dto.LocationData.Latitude,
+                    Longitude = dto.LocationData.Longitude,
+                    Heading = dto.LocationData.Heading,
+                    GoogleEarthPhotoUrl = dto.LocationData.GoogleEarthPhotoUrl,
+                    GoogleEarthUrl = dto.LocationData.GoogleEarthUrl,
+                    GoogleStreetViewEmbedUrl = dto.LocationData.GoogleStreetViewEmbedUrl
+                } : null
+            };
 
             var created = await _photoService.CreateAsync(photo);
             return CreatedAtAction(nameof(GetById), new { id = created.Id }, created);
