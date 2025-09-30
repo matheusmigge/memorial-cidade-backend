@@ -156,8 +156,7 @@ namespace memorial_cidade_backend.Controllers
                     SourceId = p.SourceId,
                     SourceName = p.Source.Collection,
                     UserId = p.UserId,
-                    UserName = p.User.FirstName,
-                    TagNames = p.Tags?.Select(t => t.Name).ToList() ?? new List<string>()
+                    UserName = p.User.FirstName
                 });
                 return Ok(photoDtos);
             }

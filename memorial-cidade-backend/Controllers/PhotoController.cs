@@ -31,22 +31,23 @@ namespace memorial_cidade_backend.Controllers
                 PhotographerId = photo.PhotographerId,
                 PhotographerName = photo.Photographer?.Name,
                 LocationId = photo.LocationData?.Id ?? 0,
-                LocationData = photo.LocationData != null ? new LocationDataDTO
-                {
-                    Latitude = photo.LocationData.Latitude,
-                    Longitude = photo.LocationData.Longitude,
-                    Heading = photo.LocationData.Heading,
-                    GoogleEarthPhotoUrl = photo.LocationData.GoogleEarthPhotoUrl,
-                    GoogleEarthUrl = photo.LocationData.GoogleEarthUrl,
-                    GoogleStreetViewEmbedUrl = photo.LocationData.GoogleStreetViewEmbedUrl
-                } : null,
+                LocationData = photo.LocationData != null
+                    ? new LocationDataDTO
+                    {
+                        Latitude = photo.LocationData.Latitude,
+                        Longitude = photo.LocationData.Longitude,
+                        Heading = photo.LocationData.Heading,
+                        GoogleEarthPhotoUrl = photo.LocationData.GoogleEarthPhotoUrl,
+                        GoogleEarthUrl = photo.LocationData.GoogleEarthUrl,
+                        GoogleStreetViewEmbedUrl = photo.LocationData.GoogleStreetViewEmbedUrl
+                    }
+                    : null,
                 SourceId = photo.SourceId,
                 SourceName = photo.Source?.Collection,
                 UserId = photo.UserId,
                 UserName = (photo.User != null)
                     ? ($"{photo.User.FirstName} {photo.User.LastName}").Trim()
-                    : null,
-                TagNames = photo.Tags?.Select(t => t.Name).ToList() ?? new List<string>()
+                    : null
             };
         }
 
@@ -59,12 +60,13 @@ namespace memorial_cidade_backend.Controllers
         }
 
         [HttpGet("{id}")]
-        public async Task<ActionResult<Photo>> GetById(int id)
+        public async Task<ActionResult<PhotoDTO>> GetById(int id)
         {
             try
             {
                 var photo = await _photoService.GetByIdAsync(id);
-                return Ok(photo);
+                var photoDto = MapToPhotoDTO(photo);
+                return Ok(photoDto);
             }
             catch (KeyNotFoundException ex)
             {
@@ -73,50 +75,89 @@ namespace memorial_cidade_backend.Controllers
         }
 
         [HttpPost]
-        public async Task<ActionResult<Photo>> Create(CreatePhotoDTO dto)
-        {
-            if (!ModelState.IsValid)
-                return BadRequest(ModelState);
-            
-            var photo = new Photo
-            {
-                Url = dto.Url,
-                Title = dto.Title,
-                YearStart = dto.YearStart,
-                CreatedAt = dto.CreatedAt,
-                UpdatedAt = dto.UpdatedAt,
-                PhotographerId = dto.PhotographerId,
-                SourceId = dto.SourceId,
-                UserId = dto.UserId,
-                LocationData = dto.LocationData != null ? new LocationData
-                {
-                    Latitude = dto.LocationData.Latitude,
-                    Longitude = dto.LocationData.Longitude,
-                    Heading = dto.LocationData.Heading,
-                    GoogleEarthPhotoUrl = dto.LocationData.GoogleEarthPhotoUrl,
-                    GoogleEarthUrl = dto.LocationData.GoogleEarthUrl,
-                    GoogleStreetViewEmbedUrl = dto.LocationData.GoogleStreetViewEmbedUrl
-                } : null
-            };
-
-            var created = await _photoService.CreateAsync(photo);
-            return CreatedAtAction(nameof(GetById), new { id = created.Id }, created);
-        }
-
-        [HttpPut("{id}")]
-        public async Task<ActionResult<Photo>> Update(int id, Photo photo)
+        public async Task<ActionResult<PhotoDTO>> Create(CreatePhotoDTO dto)
         {
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
 
             try
             {
+                var photo = new Photo
+                {
+                    Url = dto.Url,
+                    Title = dto.Title,
+                    YearStart = dto.YearStart,
+                    CreatedAt = dto.CreatedAt,
+                    UpdatedAt = dto.UpdatedAt,
+                    PhotographerId = dto.PhotographerId,
+                    SourceId = dto.SourceId,
+                    UserId = dto.UserId,
+                    LocationData = dto.LocationData != null
+                        ? new LocationData
+                        {
+                            Latitude = dto.LocationData.Latitude,
+                            Longitude = dto.LocationData.Longitude,
+                            Heading = dto.LocationData.Heading,
+                            GoogleEarthPhotoUrl = dto.LocationData.GoogleEarthPhotoUrl,
+                            GoogleEarthUrl = dto.LocationData.GoogleEarthUrl,
+                            GoogleStreetViewEmbedUrl = dto.LocationData.GoogleStreetViewEmbedUrl
+                        }
+                        : null
+                };
+
+                var created = await _photoService.CreateAsync(photo);
+                var photoDto = MapToPhotoDTO(created);
+
+                return CreatedAtAction(nameof(GetById), new { id = photoDto.Id }, photoDto);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, "An error occurred while creating the photo.");
+            }
+        }
+
+        [HttpPut("{id}")]
+        public async Task<ActionResult<PhotoDTO>> Update(int id, UpdatePhotoDTO dto)
+        {
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
+            try
+            {
+                var photo = new Photo
+                {
+                    Url = dto.Url,
+                    Title = dto.Title,
+                    YearStart = dto.YearStart,
+                    YearEnd = dto.YearEnd,
+                    UserNote = dto.UserNote,
+                    PhotographerId = dto.PhotographerId,
+                    SourceId = dto.SourceId,
+                    UserId = dto.UserId,
+                    LocationData = dto.LocationData != null
+                        ? new LocationData
+                        {
+                            Latitude = dto.LocationData.Latitude,
+                            Longitude = dto.LocationData.Longitude,
+                            Heading = dto.LocationData.Heading,
+                            GoogleEarthPhotoUrl = dto.LocationData.GoogleEarthPhotoUrl,
+                            GoogleEarthUrl = dto.LocationData.GoogleEarthUrl,
+                            GoogleStreetViewEmbedUrl = dto.LocationData.GoogleStreetViewEmbedUrl
+                        }
+                        : null
+                };
+
                 var updated = await _photoService.UpdateAsync(id, photo);
-                return Ok(updated);
+                var photoDto = MapToPhotoDTO(updated);
+                return Ok(photoDto);
             }
             catch (KeyNotFoundException ex)
             {
                 return NotFound(ex.Message);
+            }
+            catch (Exception)
+            {
+                return StatusCode(500, "An error occurred while updating the photo.");
             }
         }
 
@@ -135,35 +176,35 @@ namespace memorial_cidade_backend.Controllers
         }
 
         [HttpGet("location/{locationId}")]
-        public async Task<ActionResult<IEnumerable<Photo>>> GetByLocation(int locationId)
+        public async Task<ActionResult<IEnumerable<PhotoDTO>>> GetByLocation(int locationId)
         {
             var photos = await _photoService.GetByLocationIdAsync(locationId);
             return Ok(photos);
         }
 
         [HttpGet("photographer/{photographerId}")]
-        public async Task<ActionResult<IEnumerable<Photo>>> GetByPhotographer(int photographerId)
+        public async Task<ActionResult<IEnumerable<PhotoDTO>>> GetByPhotographer(int photographerId)
         {
             var photos = await _photoService.GetByPhotographerIdAsync(photographerId);
             return Ok(photos);
         }
 
         [HttpGet("source/{sourceId}")]
-        public async Task<ActionResult<IEnumerable<Photo>>> GetBySource(int sourceId)
+        public async Task<ActionResult<IEnumerable<PhotoDTO>>> GetBySource(int sourceId)
         {
             var photos = await _photoService.GetBySourceIdAsync(sourceId);
             return Ok(photos);
         }
 
         [HttpGet("user/{userId}")]
-        public async Task<ActionResult<IEnumerable<Photo>>> GetByUser(int userId)
+        public async Task<ActionResult<IEnumerable<PhotoDTO>>> GetByUser(int userId)
         {
             var photos = await _photoService.GetByUserIdAsync(userId);
             return Ok(photos);
         }
 
         [HttpGet("search")]
-        public async Task<ActionResult<IEnumerable<Photo>>> Search(
+        public async Task<ActionResult<IEnumerable<PhotoDTO>>> Search(
             [FromQuery] string? searchTerm,
             [FromQuery] int? yearStart,
             [FromQuery] int? yearEnd)
@@ -173,7 +214,7 @@ namespace memorial_cidade_backend.Controllers
         }
 
         [HttpPost("{photoId}/tags/{tagId}")]
-        public async Task<ActionResult<Photo>> AddTag(int photoId, int tagId)
+        public async Task<ActionResult<IEnumerable<PhotoDTO>>> AddTag(int photoId, int tagId)
         {
             try
             {
@@ -187,7 +228,7 @@ namespace memorial_cidade_backend.Controllers
         }
 
         [HttpDelete("{photoId}/tags/{tagId}")]
-        public async Task<ActionResult<Photo>> RemoveTag(int photoId, int tagId)
+        public async Task<ActionResult<PhotoDTO>> RemoveTag(int photoId, int tagId)
         {
             try
             {
